@@ -1813,6 +1813,21 @@ class QgridWidget(widgets.DOMWidget):
             'source': source
         })
 
+    def scroll_into_view(self, row: int):
+        """
+        Scroll the view to the specified row.
+
+        Parameters
+        __________
+        row : int
+            The number of the row to scroll the view to.
+        """
+        data_to_send = {
+            'type': 'scroll_into_view',
+            'row': row
+        }
+        self.send(data_to_send)
+
     def toggle_editable(self):
         """
         Change whether the grid is editable or not, without rebuilding

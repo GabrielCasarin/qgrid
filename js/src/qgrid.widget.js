@@ -784,6 +784,8 @@ class QgridView extends widgets.DOMWidgetView {
         this.slick_grid.scrollRowIntoView(msg.rows[0]);
       }
       this.ignore_selection_changed = false;
+    } else if (msg.type == 'scroll_into_view') {
+      this.slick_grid.scrollRowIntoView(msg.row);
     } else if (msg.type == 'change_show_toolbar') {
       this.initialize_toolbar();
     } else if (msg.col_info) {
