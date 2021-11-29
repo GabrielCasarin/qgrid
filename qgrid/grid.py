@@ -3,6 +3,7 @@ import pandas as pd
 import numpy as np
 import json
 
+from typing import Union, Sequence
 from types import FunctionType
 from IPython.display import display
 from numbers import Integral
@@ -602,6 +603,7 @@ class QgridWidget(widgets.DOMWidget):
     _handlers = Instance(_EventHandlers)
 
     df = Instance(pd.DataFrame)
+    columns_view = List([], sync=True)
     precision = Integer(6, sync=True)
     grid_options = Dict(sync=True)
     column_options = Dict({})
@@ -624,6 +626,7 @@ class QgridWidget(widgets.DOMWidget):
         }, self)
 
         if self.df is not None:
+            self.columns_view = self.df.columns.tolist()
             self._update_df()
 
     def _grid_options_default(self):
@@ -807,7 +810,7 @@ class QgridWidget(widgets.DOMWidget):
     def _update_df(self):
         self._ignore_df_changed = True
         # make a copy of the user's dataframe
-        self._df = self.df.copy()
+        self._df = self.df.loc[:, pd.Index(self.columns_view).intersection(self.df.columns)].copy()
 
         # insert a column which we'll use later to map edits from
         # a filtered version of this df back to the unfiltered version
@@ -1812,6 +1815,27 @@ class QgridWidget(widgets.DOMWidget):
             'new': self._selected_rows,
             'source': source
         })
+
+    def change_columns_view(self, columns: Union[str, Sequence[int], Sequence[bool]]):
+        """
+        Change the sub-set of columns which are to be displayed.
+
+        Parameters
+        ----------
+        columns : str or Sequence
+            columns may be a single column name or a regular-expression pattern; a sequence of indexes of columns; or a boolean array 
+        """
+        if isinstance(columns, str):
+            self.columns_view = self.df.columns[self.df.columns.str.match(columns)].tolist()
+        elif isinstance(columns, list):
+            if all(map(lambda c: isinstance(c, str), columns)):
+                self.columns_view = list(columns)
+            elif (all(map(lambda c: isinstance(c, int), columns))
+                  or all(map(lambda c: isinstance(c, bool), columns))):
+                self.columns_view = self.df.columns[columns].tolist()
+        else:
+            return
+        self._rebuild_widget()
 
     def scroll_into_view(self, row: int):
         """
