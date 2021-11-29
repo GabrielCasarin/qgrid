@@ -3,8 +3,9 @@ import pandas as pd
 import numpy as np
 import json
 
-from typing import Union, Sequence
+from typing import Union, Optional, Sequence
 from types import FunctionType
+from collections import defaultdict
 from IPython.display import display
 from numbers import Integral
 from traitlets import (
@@ -1815,6 +1816,35 @@ class QgridWidget(widgets.DOMWidget):
             'new': self._selected_rows,
             'source': source
         })
+
+    def fill_background(self, color: str, hash_rows: Optional[dict], rows: Optional[Sequence[int]] = None, columns: Optional[Sequence[str]] = None):
+        """
+        Set background color for a subset of cells.
+
+        Parameters
+        ----------
+        color : str
+            Any valid CSS color string
+        hash_rows : dict or None
+            Dictionary of number rows to column names
+        rows : (optional) sequence
+            Sequence of row numbers
+        columns : (optional) sequence
+            Sequence of column names
+        """
+        rows = rows or []
+        columns =  self._df.columns.intersection(columns or []).tolist(),
+        hash_rows = defaultdict(list, hash_rows or {})
+        for row in rows:
+            for col in columns:
+                if col not in hash_rows[row]:
+                    hash_rows[row].append(col)
+        data_to_send = {
+            'type': 'fill_background',
+            'color': color,
+            'hash_rows': dict(hash_rows),
+        }
+        self.send(data_to_send)
 
     def change_columns_view(self, columns: Union[str, Sequence[int], Sequence[bool]]):
         """

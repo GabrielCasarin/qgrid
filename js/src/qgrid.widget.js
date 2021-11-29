@@ -62,6 +62,7 @@ class QgridView extends widgets.DOMWidgetView {
     if (!this.$el.hasClass('q-grid-container')){
       this.$el.addClass('q-grid-container');
     }
+    this.initialize_background_styles();
     this.initialize_toolbar();
     this.initialize_slick_grid();
   }
@@ -575,6 +576,16 @@ class QgridView extends widgets.DOMWidgetView {
     }, 1);
   }
 
+  /**
+   * Create a CSS style node in the DOM
+   * which will keep the background colors for widget cells
+   */
+  initialize_background_styles() {
+    this.sheet_styles = document.createElement('style');
+    this.sheet_new_classes = [];
+    document.head.appendChild(this.sheet_styles);
+  }
+
   processPhosphorMessage(msg) {
     super.processPhosphorMessage(msg)
     switch (msg.type) {
@@ -668,6 +679,43 @@ class QgridView extends widgets.DOMWidgetView {
       return 'NaN';
     }
     return value;
+  }
+
+  get_class_name(base_class_name, value) {
+    var class_name;
+    if (value[0] == '#') {
+        class_name = 'q-grid-' + base_class_name + '_' + value.substr(1);
+    } else {
+        class_name = 'q-grid-' + base_class_name + '_' + value;
+    }
+    return class_name;
+  }
+
+  /**
+   * Returns the name of the (if non-existent) newly created one-property CSS class
+   */
+  get_or_create_class(base_class_name, prop, value) {
+    var class_name = this.get_class_name(base_class_name, value);
+    if (!this.sheet_new_classes.includes(class_name)) {
+        this.sheet_new_classes.push(class_name);
+        this.sheet_styles.innerHTML += '.' + class_name + ' {' + prop + ': ' + value + ';}\n';
+    }
+    return class_name;
+  }
+
+  get_hash_rows(class_name, hash_rows_raw) {
+    var hash_rows = {};
+    for (const row in hash_rows_raw) {
+        hash_rows[row] = {};
+    }
+    for (const row in hash_rows_raw) {
+        const cols = hash_rows_raw[row];
+        for (let i = 0; i < cols.length; i++) {
+            const col = cols[i];
+            hash_rows[row][col] = class_name;
+        }
+    }
+    return hash_rows;
   }
 
   /**
@@ -784,6 +832,10 @@ class QgridView extends widgets.DOMWidgetView {
         this.slick_grid.scrollRowIntoView(msg.rows[0]);
       }
       this.ignore_selection_changed = false;
+    } else if (msg.type == 'fill_background') {
+        var class_name = this.get_or_create_class('fill_bg', 'background-color', msg.color);
+        var hash_rows = this.get_hash_rows(class_name, msg.hash_rows);
+        this.slick_grid.setCellCssStyles(class_name, hash_rows);
     } else if (msg.type == 'scroll_into_view') {
       this.slick_grid.scrollRowIntoView(msg.row);
     } else if (msg.type == 'change_show_toolbar') {
