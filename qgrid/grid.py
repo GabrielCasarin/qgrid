@@ -1846,6 +1846,16 @@ class QgridWidget(widgets.DOMWidget):
         }
         self.send(data_to_send)
 
+    def remove_styles(self, which: Optional[dict] = None):
+        """
+        Remove the background color from the specified cells.
+        """
+        data_to_send = {
+            'type': 'remove_styles',
+            'conditions': which,
+        }
+        self.send(data_to_send)
+
     def change_columns_view(self, columns: Union[str, Sequence[int], Sequence[bool]]):
         """
         Change the sub-set of columns which are to be displayed.

@@ -836,6 +836,20 @@ class QgridView extends widgets.DOMWidgetView {
         var class_name = this.get_or_create_class('fill_bg', 'background-color', msg.color);
         var hash_rows = this.get_hash_rows(class_name, msg.hash_rows);
         this.slick_grid.setCellCssStyles(class_name, hash_rows);
+    } else if (msg.type == 'remove_styles') {
+      var conditions = msg.conditions;
+      for (const prop in conditions) {
+        if (Object.hasOwnProperty.call(conditions, prop)) {
+          const element = conditions[prop];
+          for (let i = 0; i < element.length; i++) {
+            const val = element[i];
+            var class_name = this.get_class_name(prop, val);
+            if (this.sheet_new_classes.includes(class_name)) {
+              this.slick_grid.removeCellCssStyles(class_name);
+            }
+          }
+        }
+      }
     } else if (msg.type == 'scroll_into_view') {
       this.slick_grid.scrollRowIntoView(msg.row);
     } else if (msg.type == 'change_show_toolbar') {
